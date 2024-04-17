@@ -1,8 +1,9 @@
-use std::{error::Error, fs};
+use std::{error::Error, fs, env};
 
 pub struct Config<'a> {
     pub query: &'a str,
     pub file_path: &'a str,
+    pub ignore_case: bool,
 }
 
 impl<'a> Config<'a> {
@@ -13,8 +14,14 @@ impl<'a> Config<'a> {
 
         let query = &args[1];
         let file_path = &args[2];
+        
+        let ignore_case = env::var("IGNORE_CASE").is_ok();
 
-        Ok(Config { query, file_path })
+        Ok(Config {
+            query,
+            file_path,
+            ignore_case,
+        })
     }
 }
 
@@ -22,7 +29,13 @@ impl<'a> Config<'a> {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> { 
     let contents = fs::read_to_string(config.file_path)?;
 
-    for line in search(&config.query, &contents) {
+    let results = if config.ignore_case {
+        search_case_insensitive(&config.query, &contents)
+    } else {
+        search(&config.query, &contents)
+    };
+
+    for line in results {
         println!("{line}");
     }
 
@@ -67,7 +80,7 @@ safe, fast, productive.
 Pick three.
 Duct tape.";
 
-        assert_eq!(vec!["safe, fast, productive."], search(query, contents));
+        assert_eq!(vec!["Duct tape."], search(query, contents));
     }
 
     #[test]
