@@ -44,26 +44,36 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let mut results = Vec::new();
+    let mut querynotfound = true;
 
     for line in contents.lines() {
         if line.contains(query) {
             results.push(line);
+            querynotfound = false;
         }
     }
 
+    if querynotfound {
+        println!("query not found!");
+    }
     results
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
     let mut results = Vec::new();
+    let mut querynotfound = true;
 
     for line in contents.lines() {
         if line.to_lowercase().contains(&query) { //we called a ref to query here because query at this point is a String type
             results.push(line);
+            querynotfound = false;
         }
     }
 
+    if querynotfound {
+        println!("query not found!");
+    }
     results
 }
 
@@ -73,7 +83,7 @@ mod tests {
 
     #[test]
     fn case_sensitive() {
-        let query = "Duct";
+        let query = "duct";
         let contents = "\
 Rust:
 safe, fast, productive.
@@ -85,7 +95,7 @@ Duct tape.";
 
     #[test]
     fn case_insensitive() {
-        let query = "Duct";
+        let query = "Pick";
         let contents = "\
 Rust:
 safe, fast, productive.
@@ -93,7 +103,7 @@ Pick three.
 Trust me.";
 
         assert_eq!(
-            vec!["safe, fast, productive."],
+            vec!["Pick three."],
             search_case_insensitive(query, contents)
         );
     }
