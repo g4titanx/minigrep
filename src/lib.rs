@@ -1,4 +1,6 @@
-use std::{error::Error, fs, env};
+use std::error::Error;
+use std::fs;
+use std::env;
 
 pub struct Config<'a> {
     pub query: &'a str,
@@ -90,7 +92,9 @@ safe, fast, productive.
 Pick three.
 Duct tape.";
 
-        assert_eq!(vec!["Duct tape."], search(query, contents));
+        assert_eq!(
+            vec!["safe, fast, productive."], 
+            search(query, contents));
     }
 
     #[test]
