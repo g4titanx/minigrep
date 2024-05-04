@@ -1,22 +1,58 @@
+use std::env;
 use std::error::Error;
 use std::fs;
-use std::env;
 
-pub struct Config<'a> {
-    pub query: &'a str,
-    pub file_path: &'a str,
+///pub struct Config {
+///pub query: String,
+///pub file_path: String,
+///pub ignore_case: bool,
+///}
+///
+///impl Config {
+///    pub fn build(
+///        mut args: impl Iterator<Item = String>
+/// ) -> Result<Config, &'static str> {
+///args.next();
+/// 
+///let query = match args.next() { //next() returns a Result type
+///Some(arg) => arg,
+///None => return Err("Didn't get a query string"),
+///};
+///
+///let file_path = match args.next() {
+///Some(arg) => arg,
+///None => return Err("Didn't get a file path"),
+/// };
+///let ignore_case = env::var("IGNORE_CASE").is_ok();
+/// Ok(Config {
+/// query,
+/// file_path,
+/// ignore_case,
+/// })
+/// }
+///}
+pub struct Config {
+    pub query: String,
+    pub file_path: String,
     pub ignore_case: bool,
 }
 
-impl<'a> Config<'a> {
-    pub fn build (args: &'a [String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
-        }
+impl Config {
+    pub fn build(
+        mut args: impl Iterator<Item = String>,
+    ) -> Result<Config, &'static str> {
+        args.next();
 
-        let query = &args[1];
-        let file_path = &args[2];
-        
+        let query = match args.next() { //next() returns a Result type
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
+        };
+
+        let file_path = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file path"),
+        };
+
         let ignore_case = env::var("IGNORE_CASE").is_ok();
 
         Ok(Config {
@@ -45,38 +81,30 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-    let mut querynotfound = true;
+    let result = contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect::<Vec<_>>();
 
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-            querynotfound = false;
-        }
+    if result.is_empty(){
+            vec!["query not found"]
+    } else {
+            result
     }
-
-    if querynotfound {
-        println!("query not found!");
-    }
-    results
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let query = query.to_lowercase();
-    let mut results = Vec::new();
-    let mut querynotfound = true;
+    let query = &query.to_lowercase();
+    let result = contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect::<Vec<_>>();
 
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) { //we called a ref to query here because query at this point is a String type
-            results.push(line);
-            querynotfound = false;
-        }
+    if result.is_empty(){
+        vec!["query not found"]
+    } else {
+        result
     }
-
-    if querynotfound {
-        println!("query not found!");
-    }
-    results
 }
 
 #[cfg(test)]
@@ -107,7 +135,7 @@ Pick three.
 Trust me.";
 
         assert_eq!(
-            vec!["Pick three."],
+            vec!["query not found"],
             search_case_insensitive(query, contents)
         );
     }
